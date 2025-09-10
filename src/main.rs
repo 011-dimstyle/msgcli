@@ -1,4 +1,5 @@
 mod listener;
+mod test;
 use clap::{ArgAction, Parser};
 
 
@@ -14,7 +15,13 @@ struct Args{
     udp: bool,
 
     #[arg(short, long, action = ArgAction::SetTrue)]
-    listen: bool
+    listen: bool,
+
+    #[arg(short, long)]
+    host: String,
+
+    #[arg(short, long)]
+    port: i32
 }   
 
 #[tokio::main]
@@ -26,7 +33,7 @@ async fn main() -> Result<(),Box<dyn std::error::Error>>{
     }
 
     if args.listen{
-        listener::listen_from("0.0.0.0",4000, args.tcp, args.udp).await;
+        listener::listen_from(&args.host,args.port, args.tcp, args.udp).await;
     }
 
     Ok(())
