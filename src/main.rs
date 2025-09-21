@@ -1,8 +1,5 @@
 mod listener;
 mod test;
-
-use std::{fs::read, io::Read};
-
 use clap::{ArgAction, Parser, command};
 
 #[derive(Parser)]
@@ -24,7 +21,7 @@ struct Args{
     host: String,
 
     #[arg(short, long, default_value_t = 0i32)]
-    port: i32,
+    port: u32,
 
     #[arg(short, long, default_value_t = String::default())]
     message: String
