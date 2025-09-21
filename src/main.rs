@@ -20,7 +20,7 @@ struct Args{
     #[arg(short, long, default_value_t = String::default())]
     host: String,
 
-    #[arg(short, long, default_value_t = 0i32)]
+    #[arg(short, long, default_value_t = 0u32)]
     port: u32,
 
     #[arg(short, long, default_value_t = String::default())]
