@@ -1,44 +1,26 @@
 mod listener;
+mod receiver;
+mod model;
 mod test;
-use clap::{ArgAction, Parser, command};
 
-#[derive(Parser)]
-#[command(disable_help_flag = true)]
-struct Args{
-    #[arg(short, long, action = ArgAction::SetTrue)]
-    version: bool,
-     
-     #[arg(short, long, action = ArgAction::SetTrue)]
-    tcp: bool,
-
-     #[arg(short, long, action = ArgAction::SetTrue)]
-    udp: bool,
-
-    #[arg(short, long, action = ArgAction::SetTrue)]
-    listen: bool,
-
-    #[arg(short, long, default_value_t = String::default())]
-    host: String,
-
-    #[arg(short, long, default_value_t = 0u32)]
-    port: u32,
-
-    #[arg(short, long, default_value_t = String::default())]
-    message: String
-}   
+use clap::Parser;
 
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn std::error::Error>>{
-    let args = Args::parse();                                   
+    let args = model::Args::parse();                                   
 
     if args.version{
         println!("v0.0.1");
     }
 
-    if args.listen{
-        listener::listening(args.host,args.port).await?;
+    if args.receive{
+        receiver::receive_to(args.host.clone(), args.port.clone()).await?;
     }
 
+    if args.listen{
+        listener::listening(args.host.clone(),args.port.clone()).await?;
+    }
+    
     Ok(())
 
 }
