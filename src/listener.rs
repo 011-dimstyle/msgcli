@@ -5,16 +5,13 @@ use tokio::{
     net::{self, TcpListener},
 };
 
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, Ordering},
-};
+use std::sync::Arc;
 
 use crate::model;
 
 async fn readhandler(
     readermutex: Mutex<net::tcp::OwnedReadHalf>,
-    checkconnection: Arc<AtomicBool>,
+    checkconnection: Arc<Mutex<bool>>,
     ipaddrmutex: Mutex<SocketAddr>,
 ) -> tokio::io::Result<()> {
     let mut readerguard = readermutex.lock().await;
@@ -23,20 +20,28 @@ async fn readhandler(
     let mut output = tokio::io::stdout();
     let mut readerstring = String::new();
     let ipaddrguard = ipaddrmutex.lock().await;
-
     loop {
         readerstring.clear();
         readerbuffer.read_line(&mut readerstring).await?;
         let streamdata: model::Streamdata = serde_json::from_str(readerstring.as_str())?;
-        checkconnection.store(streamdata.connect, Ordering::SeqCst);
+        {
+            let mut checkconnguard = checkconnection.lock().await;
+            *checkconnguard = streamdata.connect;
+            if !*checkconnguard{
+                output.write_all("the connection has lost\npress enter to continue ...".as_bytes()).await?;
+                output.flush().await?;
+                break;
+            }
+        }
         output
             .write_all(format!("\n{} : {}{} : ", ipaddrguard, streamdata.msg, localaddr).as_bytes())
             .await?;
         output.flush().await?;
     }
+    Ok(())
 }
 
-async fn writehandler(writermutex: Mutex<net::tcp::OwnedWriteHalf>, checkconnection: Arc<AtomicBool>) -> tokio::io::Result<()> {
+async fn writehandler(writermutex: Mutex<net::tcp::OwnedWriteHalf>, checkconnection: Arc<Mutex<bool>>) -> tokio::io::Result<()> {
     let mut writerguard = writermutex.lock().await;
     let localaddr = writerguard.local_addr()?;
     let mut output = tokio::io::stdout();
@@ -57,9 +62,13 @@ async fn writehandler(writermutex: Mutex<net::tcp::OwnedWriteHalf>, checkconnect
             }
             None => {
                 let mut streamdata = serde_json::to_string(&model::Streamdata::new(false,String::default()))?;
-                checkconnection.store(false, Ordering::SeqCst);
+                {
+                    let mut checkconnguard = checkconnection.lock().await;
+                    *checkconnguard = false;
+                }
                 streamdata.push('\n');
                 writerguard.write_all(streamdata.as_bytes()).await?;
+                println!("");
                 break;
             }
         }
@@ -67,11 +76,14 @@ async fn writehandler(writermutex: Mutex<net::tcp::OwnedWriteHalf>, checkconnect
     Ok(())
 }
 
-async fn controlflowhandler(checkconnection: Arc<AtomicBool>) {
-    loop {
-        if !checkconnection.load(Ordering::SeqCst) {
-            break;
-        };
+async fn controlflowhandler(checkconnection: Arc<Mutex<bool>>) {
+    'control : loop {
+        {
+            let checkconnguard = checkconnection.lock().await;
+            if !*checkconnguard {
+                break 'control;
+            };
+        }
     }
 }
 
@@ -89,7 +101,7 @@ pub async fn listening(host: String, port: u32) -> Result<(), Box<dyn std::error
         }
     };
 
-    let checkconnection = Arc::new(AtomicBool::new(true));
+    let checkconnection = Arc::new(Mutex::new(true));
     let checkconn_read = checkconnection.clone();
     let checkconn_write = checkconnection.clone();
     let checkconn_flow = checkconnection.clone();
