@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use std::{net::TcpListener, sync::Arc};
 
 use tokio::{
-    io::{self, AsyncBufReadExt, BufReader, AsyncWriteExt},
+    io::{self, AsyncBufReadExt, BufReader, AsyncWriteExt, AsyncReadExt},
     net::{
         TcpStream,
         tcp::{OwnedReadHalf, OwnedWriteHalf},
@@ -81,7 +81,7 @@ async fn flowhandler(checkconnection : Arc<Mutex<bool>>){
     }
 }
 
-pub async fn receive_to(host: String, port: u32) -> io::Result<()> {
+pub async fn connect_to(host: String, port: u32) -> io::Result<()> {
     let ipaddr = format!("{}:{}", host, port);
     let (readmutex, writemutex) = match TcpStream::connect(ipaddr.clone()).await {
         Ok(stream) => {
@@ -100,5 +100,13 @@ pub async fn receive_to(host: String, port: u32) -> io::Result<()> {
     tokio::spawn(writehandler(writemutex, checkconn_writer));
     flowhandler(checkconn_flow).await;
 
+    Ok(())
+}
+
+pub async fn receive_to(host: String, port: u32) -> io::Result<()>{
+    let mut stream = TcpStream::connect(format!("{}:{}",host,port)).await?;
+    let mut stringbuffer =  String::new();
+    stream.read_to_string(&mut stringbuffer).await?;
+    println!("{}",stringbuffer);
     Ok(())
 }

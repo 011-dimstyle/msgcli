@@ -1,7 +1,7 @@
 use core::net::SocketAddr;
 use tokio::sync::Mutex;
 use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+    io::{self,AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{self, TcpListener},
 };
 
@@ -13,11 +13,11 @@ async fn readhandler(
     readermutex: Mutex<net::tcp::OwnedReadHalf>,
     checkconnection: Arc<Mutex<bool>>,
     ipaddrmutex: Mutex<SocketAddr>,
-) -> tokio::io::Result<()> {
+) -> io::Result<()> {
     let mut readerguard = readermutex.lock().await;
     let localaddr = readerguard.local_addr()?;
     let mut readerbuffer = BufReader::new(&mut *readerguard);
-    let mut output = tokio::io::stdout();
+    let mut output = io::stdout();
     let mut readerstring = String::new();
     let ipaddrguard = ipaddrmutex.lock().await;
     loop {
@@ -41,11 +41,11 @@ async fn readhandler(
     Ok(())
 }
 
-async fn writehandler(writermutex: Mutex<net::tcp::OwnedWriteHalf>, checkconnection: Arc<Mutex<bool>>) -> tokio::io::Result<()> {
+async fn writehandler(writermutex: Mutex<net::tcp::OwnedWriteHalf>, checkconnection: Arc<Mutex<bool>>) -> io::Result<()> {
     let mut writerguard = writermutex.lock().await;
     let localaddr = writerguard.local_addr()?;
-    let mut output = tokio::io::stdout();
-    let input = tokio::io::stdin();
+    let mut output = io::stdout();
+    let input = io::stdin();
     let readerbuffer = BufReader::new(input);
     let mut lines = readerbuffer.lines();
     loop {
@@ -111,5 +111,23 @@ pub async fn listening(host: String, port: u32) -> Result<(), Box<dyn std::error
 
     controlflowhandler(checkconn_flow).await;
 
+    Ok(())
+}
+
+pub async fn sending(host: String, port : u32, message: String, keep: bool) -> io::Result<()>{
+    let ipaddr = format!("{}:{}",host, port);
+    let listener = TcpListener::bind(ipaddr.clone()).await?;
+    if keep{
+        println!("listening on {}",ipaddr.clone());
+    }
+    loop {
+        let (mut stream, _) = listener.accept().await?;
+        if keep{
+            println!("{}",stream.local_addr()?);
+        }
+        stream.write_all(message.as_bytes()).await?;
+        if !keep {break};
+    }
+    
     Ok(())
 }

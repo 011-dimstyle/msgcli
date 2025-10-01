@@ -1,26 +1,21 @@
 mod listener;
-mod receiver;
+mod connector;
 mod model;
 mod test;
 mod file;
 
 use clap::Parser;
+use model::Commands;
 
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn std::error::Error>>{
-    let mut args = model::Args::parse();                                   
+    let args = model::Args::parse();                                   
 
-    if args.version{
-        println!("v0.0.1");
-    }
-
-    if args.receive{
-        receiver::receive_to(args.host.clone(), args.port.clone()).await.unwrap();
-        args.listen = false;
-    }
-
-    if args.listen{
-        listener::listening(args.host.clone(),args.port.clone()).await?;
+    match args.subcommand {
+        Commands::listen { host, port } => listener::listening(host, port).await?,
+        Commands::connect { host, port } => connector::connect_to(host, port).await?,
+        Commands::send { host, port, message, keep} => listener::sending(host, port, message, keep).await?,
+        Commands::receive { host, port } => connector::receive_to(host, port).await?
     }
 
     if !args.file.is_empty() {
