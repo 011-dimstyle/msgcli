@@ -2,6 +2,7 @@ mod listener;
 mod receiver;
 mod model;
 mod test;
+mod file;
 
 use clap::Parser;
 
@@ -21,7 +22,14 @@ async fn main() -> Result<(),Box<dyn std::error::Error>>{
     if args.listen{
         listener::listening(args.host.clone(),args.port.clone()).await?;
     }
+
+    if !args.file.is_empty() {
+        
+    }
     
+    if !args.copy.is_empty(){
+        
+    }
     Ok(())
 
 }

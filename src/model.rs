@@ -27,7 +27,13 @@ pub struct Args{
     pub port: u32,
 
     #[arg(short, long, default_value_t = String::default())]
-    pub message: String
+    pub message: String,
+
+    #[arg(short, long, default_value_t = String::default())]
+    pub file : String,
+
+    #[arg(short,long, default_value_t = String::default())]
+    pub copy: String
 }  
 
 #[derive(Serialize, Deserialize, Debug)]
