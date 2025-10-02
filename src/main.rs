@@ -12,8 +12,8 @@ async fn main() -> Result<(),Box<dyn std::error::Error>>{
     let args = model::Args::parse();                                   
 
     match args.subcommand {
-        Commands::listen { host, port } => listener::listening(host, port).await?,
-        Commands::connect { host, port } => connector::connect_to(host, port).await?,
+        Commands::listen {port , copy} => listener::listening("0.0.0.0".to_string(), port, copy).await?,
+        Commands::connect { host, port , copy} => connector::connect_to(host, port, copy).await?,
         Commands::send { host, port, message, keep} => listener::sending(host, port, message, keep).await?,
         Commands::receive { host, port } => connector::receive_to(host, port).await?
     }

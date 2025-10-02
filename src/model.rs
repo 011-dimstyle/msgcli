@@ -7,11 +7,11 @@ use clap::{Parser,  ArgAction, Subcommand};
 #[derive(Subcommand)]
 pub enum Commands{
     listen {
-        #[arg(long, default_value_t = String::from("0.0.0.0"))]
-        host: String,
-
         #[arg(short, long, default_value_t = 2000u32)]
         port: u32,
+
+        #[arg(short, long, default_value_t = String::default())]
+        copy: String
     },
 
     connect{
@@ -20,6 +20,9 @@ pub enum Commands{
 
         #[arg(short, long, default_value_t = 2000u32)]
         port: u32,
+
+        #[arg(short, long, default_value_t = String::default())]
+        copy: String
     },
 
     send{
@@ -49,7 +52,6 @@ pub enum Commands{
 
 #[derive(Parser)]
 #[clap(version =  "1.0", author = "dimasalexander27@gmail.com")]
-// #[command(disable_help_flag = true)]
 pub struct Args{
 
     #[command(subcommand)]
