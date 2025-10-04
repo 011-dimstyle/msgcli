@@ -10,7 +10,7 @@ use tokio::{
     sync::Mutex,
 };
 
-use crate::model;
+use crate::{file, model};
 
 // read handler
 async fn readhandler(
@@ -30,12 +30,8 @@ async fn readhandler(
         reader.read_line(&mut readerstringbuffer).await?;
         let streamdata: model::Streamdata = serde_json::from_str(readerstringbuffer.as_str())?;
 
-        if let Some(filecpymutex) = &*filecpy {
-            let mut filecpyguard = filecpymutex.lock().await;
-            filecpyguard
-                .write_all(format!("{} : {}", localaddr, streamdata.msg).as_bytes())
-                .await?;
-        }
+        //write data to file
+        file::write_to_file_stream(&filecpy, localaddr.to_string(), &streamdata.msg).await?;
 
         {
             let mut checkconnguard = checkconnection.lock().await;
@@ -84,12 +80,8 @@ async fn writehandler(
                 streamdata.push('\n');
                 writeguard.write_all(streamdata.as_bytes()).await?;
 
-                if let Some(filecpymutex) = &*filecpy {
-                    let mut filecpyguard = filecpymutex.lock().await;
-                    filecpyguard
-                        .write_all(format!("{} : {}", localaddr, msg.clone()).as_bytes())
-                        .await?;
-                }
+               //write to file 
+               file::write_to_file_stream(&filecpy, localaddr.to_string(), &msg).await?;
             }
             None => {
                 let mut streamdata =
@@ -160,10 +152,19 @@ pub async fn connect_to(host: String, port: u32, copy: String) -> io::Result<()>
     Ok(())
 }
 
-pub async fn receive_to(host: String, port: u32) -> io::Result<()> {
+pub async fn receive_to(host: String, port: u32, copy: String) -> io::Result<()> {
     let mut stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
     let mut stringbuffer = String::new();
     stream.read_to_string(&mut stringbuffer).await?;
+    if !copy.is_empty(){
+        let mut filecpy = tokio::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .write(true)
+            .open(copy).await?;
+        
+        filecpy.write_all(stringbuffer.clone().as_bytes()).await?;
+    }
     println!("{}", stringbuffer);
     Ok(())
 }

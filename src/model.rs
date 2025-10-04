@@ -44,7 +44,21 @@ pub enum Commands{
         host: String,
 
         #[arg(short, long, default_value_t = 2000u32)]
-        port: u32
+        port: u32,
+        
+        #[arg(short, long, default_value_t = String::default())]
+        copy: String
+    },
+    
+    file{
+        #[arg(short,long, default_value_t = 2000u32)]
+        port: u32,
+
+        #[arg(long)]
+        path: String,
+
+        #[arg(long, default_value_t = false, action = ArgAction::SetTrue)]
+        keep: bool
     }
 
 

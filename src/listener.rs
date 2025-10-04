@@ -7,7 +7,7 @@ use tokio::{
 
 use std::sync::Arc;
 
-use crate::{model};
+use crate::{file,model};
 
 // read handler
 
@@ -29,10 +29,7 @@ async fn readhandler(
         let streamdata: model::Streamdata = serde_json::from_str(readerstring.as_str())?;
 
         //write from client to file copy
-        if let Some(filecpymutex) = & *filecpy{
-            let mut filecpyguard = filecpymutex.lock().await;
-            filecpyguard.write_all(format!("{} : {}",ipaddrguard,streamdata.msg).as_bytes()).await?;
-        }
+        file::write_to_file_stream(& filecpy, ipaddrguard.to_string(), &streamdata.msg).await?;
 
         {
             let mut checkconnguard = checkconnection.lock().await;
@@ -83,10 +80,7 @@ async fn writehandler(
                 writerguard.write_all(streamdata.as_bytes()).await?;
                 
                 // write from local to file copy
-                if let Some(filecpymutex) = & *filecpy{
-                    let mut filecpyguard = filecpymutex.lock().await;
-                    filecpyguard.write_all(format!("{} : {}",localaddr,msg.clone()).as_bytes()).await?;
-                }
+                file::write_to_file_stream(& filecpy, localaddr.to_string(), &msg).await?;
                 
             }
             None => {
