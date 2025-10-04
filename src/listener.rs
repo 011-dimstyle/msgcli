@@ -115,8 +115,8 @@ async fn controlflowhandler(checkconnection: Arc<Mutex<bool>>) {
 
 // streaming mode
 
-pub async fn listening(host: String, port: u32, copy: String) -> io::Result<()> {
-    let listen = TcpListener::bind(format!("{}:{}", host, port)).await?;
+pub async fn listening(bind: String, copy: String) -> io::Result<()> {
+    let listen = TcpListener::bind(bind).await?;
     println!("listen on {}", listen.local_addr()?);
 
     let (writermutex, readermutex, ipaddrmutex) = match listen.accept().await {
@@ -165,11 +165,10 @@ pub async fn listening(host: String, port: u32, copy: String) -> io::Result<()> 
 
 // none streaming
 
-pub async fn sending(host: String, port: u32, message: String, keep: bool) -> io::Result<()> {
-    let ipaddr = format!("{}:{}", host, port);
-    let listener = TcpListener::bind(ipaddr.clone()).await?;
+pub async fn sending(bind: String, message: String, keep: bool) -> io::Result<()> {
+    let listener = TcpListener::bind(bind.clone()).await?;
     if keep {
-        println!("listening on {}", ipaddr.clone());
+        println!("listening on {}", bind.clone());
     }
     loop {
         let (mut stream, client) = listener.accept().await?;

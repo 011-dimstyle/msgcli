@@ -111,8 +111,8 @@ async fn flowhandler(checkconnection: Arc<Mutex<bool>>) {
     }
 }
 
-pub async fn connect_to(host: String, port: u32, copy: String) -> io::Result<()> {
-    let ipaddr = format!("{}:{}", host, port);
+pub async fn connect_to(bind: String, copy: String) -> io::Result<()> {
+    let ipaddr = bind;
     let (readmutex, writemutex) = match TcpStream::connect(ipaddr.clone()).await {
         Ok(stream) => {
             let (read, write) = stream.into_split();
@@ -120,7 +120,7 @@ pub async fn connect_to(host: String, port: u32, copy: String) -> io::Result<()>
         }
         Err(e) => panic!("{}", e),
     };
-
+ 
     let mut filecpy: Arc<Option<Mutex<File>>> = Arc::new(None);
     if !copy.is_empty() {
         filecpy = Arc::new(Some(Mutex::new(
@@ -152,8 +152,8 @@ pub async fn connect_to(host: String, port: u32, copy: String) -> io::Result<()>
     Ok(())
 }
 
-pub async fn receive_to(host: String, port: u32, copy: String) -> io::Result<()> {
-    let mut stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
+pub async fn receive_to(bind: String, copy: String) -> io::Result<()> {
+    let mut stream = TcpStream::connect(bind).await?;
     let mut stringbuffer = String::new();
     stream.read_to_string(&mut stringbuffer).await?;
     if !copy.is_empty(){

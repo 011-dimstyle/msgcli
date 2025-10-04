@@ -7,30 +7,24 @@ use clap::{Parser,  ArgAction, Subcommand};
 #[derive(Subcommand)]
 pub enum Commands{
     listen {
-        #[arg(short, long, default_value_t = 2000u32)]
-        port: u32,
-
+        #[arg(long, default_value_t = String::from("0.0.0.0:2000"))]
+        bind: String,
+        
         #[arg(short, long, default_value_t = String::default())]
         copy: String
     },
 
     connect{
-        #[arg(long)]
-        host: String,
-
-        #[arg(short, long, default_value_t = 2000u32)]
-        port: u32,
+       #[arg(long, default_value_t = String::from("0.0.0.0:2000"))]
+        bind: String,
 
         #[arg(short, long, default_value_t = String::default())]
         copy: String
     },
 
     send{
-        #[arg(long, default_value_t = String::from("0.0.0.0"))]
-        host: String,
-
-        #[arg(short, long, default_value_t = 2000u32)]
-        port: u32,
+        #[arg(long, default_value_t = String::from("0.0.0.0:2000"))]
+        bind: String,
 
         #[arg(short, long)]
         message: String,
@@ -40,19 +34,16 @@ pub enum Commands{
     },
 
     receive{
-        #[arg(long)]
-        host: String,
+        #[arg(long, default_value_t = String::from("0.0.0.0:2000"))]
+        bind: String,
 
-        #[arg(short, long, default_value_t = 2000u32)]
-        port: u32,
-        
         #[arg(short, long, default_value_t = String::default())]
         copy: String
     },
     
     file{
-        #[arg(short,long, default_value_t = 2000u32)]
-        port: u32,
+        #[arg(long, default_value_t = String::from("0.0.0.0:2000"))]
+        bind: String,
 
         #[arg(long)]
         path: String,
