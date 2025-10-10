@@ -154,8 +154,8 @@ pub async fn connect_to(bind: String, copy: String) -> io::Result<()> {
 
 pub async fn receive_to(bind: String, copy: String) -> io::Result<()> {
     let mut stream = TcpStream::connect(bind).await?;
-    let mut stringbuffer = String::new();
-    stream.read_to_string(&mut stringbuffer).await?;
+    let mut databuffer : Vec<u8> = Vec::new();
+    stream.read_to_end(&mut databuffer).await?;
     if !copy.is_empty(){
         let mut filecpy = tokio::fs::OpenOptions::new()
             .create(true)
@@ -163,8 +163,8 @@ pub async fn receive_to(bind: String, copy: String) -> io::Result<()> {
             .write(true)
             .open(copy).await?;
         
-        filecpy.write_all(stringbuffer.clone().as_bytes()).await?;
+        filecpy.write_all(&databuffer).await?;
     }
-    println!("{}", stringbuffer);
+    // println!("{}", databuffer);
     Ok(())
 }

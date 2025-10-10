@@ -16,7 +16,7 @@ pub async fn write_to_file_stream(filecpy: &Option<Mutex<fs::File>>, ipaddr: Str
 
 pub async fn sendfile(path: String, keep: bool, bind: String) -> io::Result<()> {
 	let listener = TcpListener::bind(bind).await?;
-	let mut stringbuffer = String::new();    
+	let mut databuffer: Vec<u8> = Vec::new();    
 	let mut file = fs::OpenOptions::new()
 		.read(true)
 		.open(path).await?;
@@ -28,10 +28,10 @@ pub async fn sendfile(path: String, keep: bool, bind: String) -> io::Result<()> 
 		let (mut stream, client) = listener.accept().await?;
 		println!("from {}",client);
 
-		stringbuffer.clear();
-		file.read_to_string(&mut stringbuffer).await?;
+		databuffer.clear();
+		file.read_to_end(&mut databuffer).await?;
 		
-		stream.write_all(stringbuffer.clone().as_bytes()).await?;
+		stream.write_all(&databuffer.clone()).await?;
 		
 		if !keep{break}
 	}
